@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>現金管理計算工具</title>
+    <style>
+        :root {
+            --primary: #0d47a1;
+            --primary-light: #1a73e8;
+            --secondary: #34a853;
+            --tertiary: #fbbc05;
+            --danger: #ea4335;
+            --warning: #ff9800;
+            --light: #f8f9fa;
+            --dark: #202124;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            
+            --note-1000: #9c27b0;
+            --note-500: #ff9800;
+            --note-100: #3f51b5;
+            --coin-50: #607d8b;
+            --coin-10: #4caf50;
+            --coin-5: #795548;
+            --coin-1: #9e9e9e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--primary);
+        }
+        
+        .header h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            border-top: 4px solid var(--primary);
+        }
+        
+        .input-section {
+            margin-bottom: 0.8rem;
+        }
+        
+        .section-title {
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px solid var(--tertiary);
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        
+        .subsection-title {
+            color: var(--secondary);
+            margin-top: 1rem;
+            margin-bottom: 0.6rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .subsection-title:before {
+            content: "";
+            display: inline-block;
+            width: 6px;
+            height: 18px;
+            background-color: var(--secondary);
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        
+        .input-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.8rem;
+        }
+        
+        .input-group {
+            margin-bottom: 0.8rem;
+            position: relative;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 2px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
+        }
+        
+        .input-group input:focus {
+            border-color: var(--primary-light);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+            background-color: white;
+        }
+        
+        .input-error {
+            border-color: var(--danger) !important;
+            animation: pulse-error 1.5s infinite;
+        }
+        
+        @keyframes pulse-error {
+            0% { box-shadow: 0 0 0 0 rgba(234, 67, 53, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(234, 67, 53, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 67, 53, 0); }
+        }
+        
+        .error-message {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .balance-error {
+            animation: pulse-error 1.5s infinite;
+        }
+        
+        .btn {
+            background-color: var(--primary-light);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .btn-clear {
+            background-color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-clear:hover {
+            background-color: #5a6268;
+        }
+        
+        .result-section {
+            display: none;
+        }
+        
+        .result-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-block {
+            background-color: #f9f9f9;
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 6px solid var(--tertiary);
+            transition: all 0.3s;
+        }
+        
+        .result-block:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-block-notes {
+            border-left-color: var(--note-100);
+        }
+        
+        .result-block-coins {
+            border-left-color: var(--coin-10);
+        }
+        
+        .warning-block {
+            background-color: #fff3e0;
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 6px solid var(--warning);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .warning-block:after {
+            content: "⚠️";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            opacity: 0.2;
+        }
+        
+        .warning-title {
+            color: var(--warning);
+            font-weight: bold;
+            margin-bottom: 0.6rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning-title:before {
+            content: "⚠️";
+            margin-right: 6px;
+        }
+        
+        .info-block {
+            background-color: #e3f2fd;
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 6px solid var(--primary-light);
+            position: relative;
+        }
+        
+        .info-block:after {
+            content: "ℹ️";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            opacity: 0.2;
+        }
+        
+        .info-title {
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 0.6rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-title:before {
+            content: "ℹ️";
+            margin-right: 6px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px dashed #e0e0e0;
+            line-height: 1.4;
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .result-row .label {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .result-row .value {
+            text-align: right;
+            font-weight: 600;
+            min-width: 160px;
+        }
+        
+        .result-total {
+            font-weight: bold;
+            font-size: 1.15rem;
+            color: var(--primary);
+            border-top: 2px solid var(--tertiary);
+            padding-top: 0.6rem;
+            margin-top: 0.6rem;
+        }
+        
+        .result-total .note {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: normal;
+            display: block;
+            margin-top: 0.2rem;
+        }
+        
+        .coin-detail {
+            font-size: 0.95rem;
+            color: #555;
+            margin-top: 0.6rem;
+            padding: 0.6rem;
+            border-radius: var(--radius);
+            background-color: #efefef;
+            border-left: 3px solid #bbb;
+        }
+        
+        .highlight {
+            display: inline-block;
+            background-color: #fff9e0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 0.2rem 0;
+            border: 1px solid #ffe082;
+        }
+        
+        .denomination {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        
+        .denom-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            border-radius: 50%;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .note-1000 { background-color: var(--note-1000); }
+        .note-500 { background-color: var(--note-500); }
+        .note-100 { background-color: var(--note-100); }
+        .coin-50 { background-color: var(--coin-50); }
+        .coin-10 { background-color: var(--coin-10); }
+        .coin-5 { background-color: var(--coin-5); }
+        .coin-1 { background-color: var(--coin-1); }
+        
+        .money-amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .money-amount-1000 { color: var(--note-1000); }
+        .money-amount-500 { color: var(--note-500); }
+        .money-amount-100 { color: var(--note-100); }
+        .money-amount-50 { color: var(--coin-50); }
+        .money-amount-10 { color: var(--coin-10); }
+        .money-amount-5 { color: var(--coin-5); }
+        .money-amount-1 { color: var(--coin-1); }
+        
+        .money-count {
+            background-color: #f0f0f0;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-left: 6px;
+            border: 1px solid #ddd;
+        }
+        
+        .money-package {
+            background-color: #e8f5e9;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-left: 6px;
+            border: 1px solid #c8e6c9;
+            white-space: nowrap;
+        }
+        
+        .summary-box {
+            display: flex;
+            flex-direction: column;
+            background-color: #e8f0fe;
+            border-radius: var(--radius);
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+            border: 1px solid #c0d6f9;
+            transition: all 0.3s;
+        }
+        
+        .summary-box.error {
+            background-color: #ffebee;
+            border-color: #ffcdd2;
+            animation: pulse-error 1.5s infinite;
+        }
+        
+        .summary-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+        
+        .summary-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            align-self: flex-end;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.8rem;
+        }
+        
+        .compact-card {
+            padding-top: 0.8rem;
+            padding-bottom: 0.8rem;
+        }
+        
+        .compact-block {
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .compact-row {
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+        }
+        
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .collapsible-header:after {
+            content: "▼";
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+        
+        .collapsible-header.collapsed:after {
+            transform: rotate(-90deg);
+        }
+        
+        .collapsible-content {
+            overflow: hidden;
+            max-height: 1000px;
+            transition: max-height 0.3s ease-in-out;
+        }
+        
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 8% auto;
+            padding: 16px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 700px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            animation: slideDown 0.4s;
+        }
+        
+        @keyframes slideDown {
+            from {opacity: 0; transform: translateY(-30px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+        
+        .modal-title {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid var(--tertiary);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .info-btn {
+            background-color: var(--primary-light);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.4rem 0.8rem;
+            margin: 0.4rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .info-btn:hover {
+            background-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0 8px;
+        }
+        
+        /* Manual styling improvements */
+        .manual-section {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .manual-section h4 {
+            color: var(--primary);
+            margin: 12px 0 6px;
+            font-size: 1.1rem;
+        }
+        
+        .manual-section h5 {
+            color: var(--secondary);
+            margin: 10px 0 5px;
+            font-size: 1rem;
+        }
+        
+        .manual-section p {
+            margin: 6px 0;
+            line-height: 1.5;
+        }
+        
+        .manual-section ul, 
+        .manual-section ol {
+            margin: 6px 0;
+            padding-left: 20px;
+        }
+        
+        .manual-section li {
+            margin-bottom: 4px;
+        }
+        
+        .manual-section .highlight-info {
+            background-color: #e8f5e9;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .manual-section .highlight-warning {
+            background-color: #fff8e1;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .flow-diagram {
+            background-color: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 12px 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.3;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        @media (max-width: 768px) {
+            .input-form {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .result-row {
+                flex-direction: column;
+            }
+            
+            .result-row .value {
+                text-align: left;
+                margin-top: 3px;
+                margin-left: 8px;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .info-btn {
+                margin: 0.2rem 0;
+            }
+            
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .subsection-title {
+                font-size: 1.1rem;
+            }
+            
+            .money-amount {
+                font-size: 1.1rem;
+            }
+            
+            .summary-value {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>現金管理計算工具</h1>
+            <p>輸入各面額總金額，系統自動計算零錢處理、預留零用金和營收上繳</p>
+            <div class="action-buttons">
+                <button id="show-package-info" class="info-btn">硬幣&紙鈔包裝資訊</button>
+                <button id="show-manual" class="info-btn">查看使用說明</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="input-section">
+                <button id="clear-btn" class="btn btn-clear btn-block">清除數值</button>
+                <h2 class="section-title">輸入各面額總金額</h2>
+                <div class="input-form">
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon note-1000">1K</div>
+                            <label for="amount1000">1000 元總金額</label>
+                        </div>
+                        <input type="text" id="amount1000" placeholder="例如: 8000" inputmode="numeric">
+                        <div id="error1000" class="error-message">請輸入1000的倍數</div>
+                    </div>
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon note-500">500</div>
+                            <label for="amount500">500 元總金額</label>
+                        </div>
+                        <input type="text" id="amount500" placeholder="例如: 13000" inputmode="numeric">
+                        <div id="error500" class="error-message">請輸入500的倍數</div>
+                    </div>
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon note-100">100</div>
+                            <label for="amount100">100 元總金額</label>
+                        </div>
+                        <input type="text" id="amount100" placeholder="例如: 7200" inputmode="numeric">
+                        <div id="error100" class="error-message">請輸入100的倍數</div>
+                    </div>
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon coin-50">50</div>
+                            <label for="amount50">50 元總金額</label>
+                        </div>
+                        <input type="text" id="amount50" placeholder="例如: 1450" inputmode="numeric">
+                        <div id="error50" class="error-message">請輸入50的倍數</div>
+                    </div>
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon coin-10">10</div>
+                            <label for="amount10">10 元總金額</label>
+                        </div>
+                        <input type="text" id="amount10" placeholder="例如: 720" inputmode="numeric">
+                        <div id="error10" class="error-message">請輸入10的倍數</div>
+                    </div>
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon coin-5">5</div>
+                            <label for="amount5">5 元總金額</label>
+                        </div>
+                        <input type="text" id="amount5" placeholder="例如: 345" inputmode="numeric">
+                        <div id="error5" class="error-message">請輸入5的倍數</div>
+                    </div>
+                    <div class="input-group">
+                        <div class="denomination">
+                            <div class="denom-icon coin-1">1</div>
+                            <label for="amount1">1 元總金額</label>
+                        </div>
+                        <input type="text" id="amount1" placeholder="例如: 321" inputmode="numeric">
+                        <div id="error1" class="error-message">請輸入正整數</div>
+                    </div>
+                </div>
+                <button id="calculate-btn" class="btn btn-block">計算結果</button>
+            </div>
+        </div>
+        
+        <div id="result-container" class="result-section">
+            <!-- 總覽摘要 -->
+            <div class="card compact-card">
+                <h2 class="section-title">結果總覽</h2>
+                <div class="summary-grid">
+                    <div class="summary-box">
+                        <div class="summary-title">全部總金額</div>
+                        <div id="total-amount" class="summary-value">0 元</div>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-title">零錢處理（移入營收）</div>
+                        <div id="summary-small-coins" class="summary-value">0 元</div>
+                    </div>
+                    <div id="petty-cash-box" class="summary-box">
+                        <div class="summary-title">預留零用金</div>
+                        <div id="petty-cash-actual" class="summary-value">20,000 元</div>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-title">營收上繳</div>
+                        <div id="summary-revenue" class="summary-value">0 元</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 零錢處理（變為可折疊） -->
+            <div class="card compact-card">
+                <h2 class="section-title collapsible-header collapsed">零錢處理 → 移入「營收」</h2>
+                <div class="collapsible-content collapsed">
+                    <div class="result-block compact-block result-block-coins">
+                        <div class="result-row compact-row">
+                            <div class="label">四種硬幣合計（50 + 10 + 5 + 1 面額）：</div>
+                            <div id="total-coins" class="value money-amount">0 元</div>
+                        </div>
+                        <div class="result-row compact-row">
+                            <div class="label">多出兩位數（mod 100）：</div>
+                            <div id="remainder-coins" class="value money-amount">0 元</div>
+                        </div>
+                        <div class="result-row result-total">
+                            <div class="label">移入營收的零錢：</div>
+                            <div id="moved-coins" class="value money-amount">0 元</div>
+                        </div>
+                        <div class="coin-detail" id="coin-detail">
+                            <div id="coin-breakdown"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 預留零用金 -->
+            <div class="card compact-card">
+                <h2 class="section-title">預留零用金（20,000 元）</h2>
+                
+                <!-- 移動紙鈔填滿剩餘到上方 -->
+                <div class="result-block compact-block result-block-notes">
+                    <h3 class="subsection-title">1. 紙鈔填滿</h3>
+                    <div id="paper-money-detail"></div>
+                </div>
+                
+                <div class="result-block compact-block result-block-coins">
+                    <h3 class="subsection-title">2. 保留硬幣</h3>
+                    <div class="result-row compact-row">
+                        <div class="label">保留硬幣總額（可整除百元的硬幣總額）：</div>
+                        <div id="kept-coins-total" class="value money-amount">0 元</div>
+                    </div>
+                    <div id="kept-coins-detail"></div>
+                </div>
+                
+                <div id="balance-warning" class="warning-block" style="display: none;">
+                    <div class="warning-title">注意！</div>
+                    <div id="balance-warning-text"></div>
+                </div>
+                
+                <div class="result-block compact-block">
+                    <div class="result-row result-total">
+                        <div class="label">預留零用金總額：</div>
+                        <div id="petty-cash-final" class="value money-amount">0 元</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 營收上繳 -->
+            <div class="card compact-card">
+                <h2 class="section-title">營收上繳</h2>
+                <div class="result-block compact-block">
+                    <div class="result-row result-total">
+                        <div class="label">營收上繳總額（總金額 - 預留零用金實際額）：</div>
+                        <div id="revenue-amount" class="value money-amount">0 元</div>
+                    </div>
+                    <div id="revenue-details"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 包裝資訊模態框 -->
+    <div id="package-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 class="modal-title">硬幣&紙鈔包裝資訊</h3>
+            <div class="manual-section">
+                <h4>硬幣袋裝換算表</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>面額</th>
+                                <th>每袋數量</th>
+                                <th>每袋金額</th>
+                                <th>備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>50元</strong></td>
+                                <td>40枚</td>
+                                <td>2,000元</td>
+                                <td>每袋40枚裝</td>
+                            </tr>
+                            <tr>
+                                <td><strong>10元</strong></td>
+                                <td>50枚</td>
+                                <td>500元</td>
+                                <td>每袋50枚裝</td>
+                            </tr>
+                            <tr>
+                                <td><strong>5元</strong></td>
+                                <td>50枚</td>
+                                <td>250元</td>
+                                <td>每袋50枚裝</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1元</strong></td>
+                                <td>100枚</td>
+                                <td>100元</td>
+                                <td>每袋100枚裝</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h4>紙鈔捆裝換算表</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>面額</th>
+                                <th>每捆數量</th>
+                                <th>每捆金額</th>
+                                <th>備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>1000元</strong></td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>無需捆包</td>
+                            </tr>
+                            <tr>
+                                <td><strong>500元</strong></td>
+                                <td>20張</td>
+                                <td>10,000元</td>
+                                <td>不限制10,000元一捆</td>
+                            </tr>
+                            <tr>
+                                <td><strong>100元</strong></td>
+                                <td>20張</td>
+                                <td>2,000元</td>
+                                <td>強制2,000元一捆</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h4>實際換算案例</h4>
+                <div class="highlight-info">
+                    <strong>50元硬幣範例：</strong>
+                    <ul>
+                        <li>71枚 = 1袋(40枚) + 31枚散裝 = 3,550元</li>
+                        <li>120枚 = 3袋(3×40枚) + 0枚散裝 = 6,000元</li>
+                    </ul>
+                    
+                    <strong>10元硬幣範例：</strong>
+                    <ul>
+                        <li>22枚 = 0袋 + 22枚散裝 = 220元</li>
+                        <li>73枚 = 1袋(50枚) + 23枚散裝 = 730元</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 使用說明模態框 -->
+    <div id="manual-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 class="modal-title">POS機算錢-說明文件</h3>
+            <div style="max-height: 70vh; overflow-y: auto; padding-right: 10px;">
+                <div class="manual-section">
+                    <h4>一、功能簡介</h4>
+                    <p>現金管理計算工具專為零售業、餐飲業等需要處理大量現金交易的企業設計，能夠自動化處理日常營業結束後的現金盤點、零用金分配與營收上繳。</p>
+                    
+                    <div class="highlight-info">
+                        <strong>核心功能：</strong>
+                        <ul>
+                            <li>自動計算各面額金額的張數/枚數</li>
+                            <li>依規則移出零錢至營收</li>
+                            <li>最佳化零用金配置，預留足夠的硬幣與小面額</li>
+                            <li>計算需上繳的營收金額明細</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="manual-section">
+                    <h4>二、使用流程</h4>
+                    <ol>
+                        <li>依序輸入各面額總金額（不需輸入張/枚數，系統自動換算）</li>
+                        <li>確保每個面額的金額為該面額的整數倍（系統會自動檢查）</li>
+                        <li>點擊「計算結果」按鈕</li>
+                        <li>查看計算結果：零錢處理、預留零用金及營收上繳</li>
+                    </ol>
+                    
+                    <div class="flow-diagram">
+盤點現金 → 輸入各面額總額 → 計算處理 → 查看結果
+  ↓                                     ↓
+確認無誤                               匯出報表
+</div>
+                </div>
+                
+                <div class="manual-section">
+                    <h4>三、計算規則</h4>
+                    
+                    <h5>1. 零錢處理</h5>
+                    <p>處理零錢規則如下：</p>
+                    <ul>
+                        <li>計算四種硬幣（50元、10元、5元、1元）總金額</li>
+                        <li>從中提取不足100元的零錢（mod 100的餘數）</li>
+                        <li>將這些零錢移入營收上繳部分，不計入預留零用金</li>
+                    </ul>
+                    
+                    <h5>2. 預留零用金（固定20,000元）</h5>
+                    <p>預留零用金的組成規則：</p>
+                    <ul>
+                        <li><strong>硬幣部分</strong>：保留所有可整除100元的硬幣總額</li>
+                        <li><strong>紙鈔部分</strong>：</li>
+                        <ul>
+                            <li>500元：限制在10,000元以內（最多20張），超過部分移至營收上繳</li>
+                            <li>100元：盡可能保留所有100元鈔票，優先用於零用金</li>
+                            <li>1000元：不用於零用金，全數移至營收上繳</li>
+                        </ul>
+                    </ul>
+                    
+                    <div class="highlight-warning">
+                        <strong>重要提醒：</strong>
+                        <p>若預留零用金無法達到20,000元整，系統會顯示警告提示，並自動調整以最接近目標金額。</p>
+                    </div>
+                    
+                    <h5>3. 營收上繳</h5>
+                    <p>營收上繳金額 = 全部總金額 - 預留零用金實際金額</p>
+                    <p>包含以下面額：</p>
+                    <ul>
+                        <li>全部1000元紙鈔</li>
+                        <li>超出10,000元限制的500元紙鈔</li>
+                        <li>若有剩餘的100元紙鈔</li>
+                        <li>零錢處理後的零錢（mod 100的餘數）</li>
+                    </ul>
+                </div>
+                
+                <div class="manual-section">
+                    <h4>四、實際案例</h4>
+                    <div class="highlight-info">
+                        <strong>案例：營業日終盤點</strong>
+                        <p>輸入金額：</p>
+                        <ul>
+                            <li>1000元：8,000元</li>
+                            <li>500元：13,000元</li>
+                            <li>100元：7,200元</li>
+                            <li>50元：1,450元</li>
+                            <li>10元：720元</li>
+                            <li>5元：345元</li>
+                            <li>1元：321元</li>
+                        </ul>
+                        <p>系統計算結果：</p>
+                        <ul>
+                            <li>零錢處理：36元 = 5元×7枚 + 1元×1枚</li>
+                            <li>預留零用金：20,000元</li>
+                            <li>保留硬幣：2,800元</li>
+                            <li>紙鈔填滿：17,200元（500元×26張 + 100元×42張）</li>
+                            <li>營收上繳：11,036元</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 預設值
+            document.getElementById('amount1000').value = '1700';
+            document.getElementById('amount500').value = '6000';
+            document.getElementById('amount100').value = '11000';
+            document.getElementById('amount50').value = '2100';
+            document.getElementById('amount10').value = '1500';
+            document.getElementById('amount5').value = '325';
+            document.getElementById('amount1').value = '175';
+            
+            // 格式化數字為貨幣格式
+            function formatMoney(number) {
+                return new Intl.NumberFormat('zh-TW').format(number) + ' 元';
+            }
+            
+            // 硬幣袋裝換算規則
+            const packagingRules = {
+                '50': { bagValue: 2000, bagCount: 40 },
+                '10': { bagValue: 500, bagCount: 50 },
+                '5': { bagValue: 250, bagCount: 50 },
+                '1': { bagValue: 100, bagCount: 100 }
+            };
+            
+            // 計算袋數和散枚數
+            function calculateBags(amount, denomination) {
+                const rule = packagingRules[denomination.toString()];
+                const totalCoins = amount / parseInt(denomination);
+                const bags = Math.floor(totalCoins / rule.bagCount);
+                const loose = totalCoins % rule.bagCount;
+                const looseAmount = loose * parseInt(denomination);
+                return { bags, loose, looseAmount };
+            }
+            
+            // 驗證輸入金額是否為面額的倍數
+            function validateInput(input, denomination) {
+                const value = parseInt(input.value.replace(/,/g, '')) || 0;
+                const errorElement = document.getElementById('error' + denomination);
+                
+                // 清除先前的錯誤狀態
+                input.classList.remove('input-error');
+                errorElement.classList.remove('active');
+                
+                if (value % denomination !== 0) {
+                    input.classList.add('input-error');
+                    errorElement.classList.add('active');
+                    return false;
+                }
+                return true;
+            }
+            
+            // 清除按鈕功能
+            document.getElementById('clear-btn').addEventListener('click', function() {
+                document.querySelectorAll('input[type="text"]').forEach(input => {
+                    input.value = '';
+                    input.classList.remove('input-error');
+                });
+                
+                document.querySelectorAll('.error-message').forEach(msg => {
+                    msg.classList.remove('active');
+                });
+                
+                // 隱藏結果區域
+                document.getElementById('result-container').classList.remove('active');
+            });
+            
+            // 折疊功能
+            document.querySelectorAll('.collapsible-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    this.classList.toggle('collapsed');
+                    const content = this.nextElementSibling;
+                    content.classList.toggle('collapsed');
+                });
+            });
+            
+            // 計算按鈕功能
+            document.getElementById('calculate-btn').addEventListener('click', function() {
+                // 移除先前的錯誤警告
+                document.querySelectorAll('input').forEach(input => {
+                    input.classList.remove('input-error');
+                });
+                document.querySelectorAll('.error-message').forEach(message => {
+                    message.classList.remove('active');
+                });
+                
+                // 獲取並驗證輸入值
+                const inputs = {
+                    '1000': document.getElementById('amount1000'),
+                    '500': document.getElementById('amount500'),
+                    '100': document.getElementById('amount100'),
+                    '50': document.getElementById('amount50'),
+                    '10': document.getElementById('amount10'),
+                    '5': document.getElementById('amount5'),
+                    '1': document.getElementById('amount1')
+                };
+                
+                let hasError = false;
+                Object.entries(inputs).forEach(([denom, input]) => {
+                    if (!validateInput(input, denom)) {
+                        hasError = true;
+                    }
+                });
+                
+                if (hasError) {
+                    return; // 如果有輸入錯誤，停止計算
+                }
+                
+                // 獲取輸入值
+                const amounts = {
+                    '1000': parseInt(inputs['1000'].value.replace(/,/g, '')) || 0,
+                    '500': parseInt(inputs['500'].value.replace(/,/g, '')) || 0,
+                    '100': parseInt(inputs['100'].value.replace(/,/g, '')) || 0,
+                    '50': parseInt(inputs['50'].value.replace(/,/g, '')) || 0,
+                    '10': parseInt(inputs['10'].value.replace(/,/g, '')) || 0,
+                    '5': parseInt(inputs['5'].value.replace(/,/g, '')) || 0,
+                    '1': parseInt(inputs['1'].value.replace(/,/g, '')) || 0
+                };
+                
+                // 計算各面額的張數/枚數
+                const counts = {
+                    '1000': amounts['1000'] / 1000,
+                    '500': amounts['500'] / 500,
+                    '100': amounts['100'] / 100,
+                    '50': amounts['50'] / 50,
+                    '10': amounts['10'] / 10,
+                    '5': amounts['5'] / 5,
+                    '1': amounts['1'] / 1
+                };
+                
+                // 1. 計算總金額
+                const totalAmount = amounts['1000'] + amounts['500'] + amounts['100'] + 
+                                   amounts['50'] + amounts['10'] + amounts['5'] + amounts['1'];
+                
+                // 2. 零錢處理
+                const totalCoins = amounts['50'] + amounts['10'] + amounts['5'] + amounts['1'];
+                const remainderCoins = totalCoins % 100;
+                const keptCoins = totalCoins - remainderCoins;
+                
+                // 計算零錢明細 - 使用貪婪算法找出最少硬幣組合
+                function getCoinsBreakdown(amount) {
+                    let remaining = amount;
+                    const denominations = [50, 10, 5, 1];
+                    const result = { '50': 0, '10': 0, '5': 0, '1': 0 };
+                    
+                    for (const denom of denominations) {
+                        // 檢查是否有足夠的該面額硬幣
+                        const available = Math.floor(amounts[denom.toString()] / denom);
+                        const needed = Math.floor(remaining / denom);
+                        const used = Math.min(available, needed);
+                        
+                        result[denom.toString()] = used;
+                        remaining -= used * denom;
+                        
+                        if (remaining === 0) break;
+                    }
+                    
+                    return result;
+                }
+                
+                // 獲取零錢明細
+                const smallCoinsBreakdown = getCoinsBreakdown(remainderCoins);
+                
+                // 3. 預留零用金
+                const pettyCashTarget = 20000;
+                const remainingCashNeeded = pettyCashTarget - keptCoins;
+                
+                // 計算零用金中保留的硬幣明細
+                const keptCoinsDetail = {
+                    '50': Math.floor(amounts['50'] / 50) - smallCoinsBreakdown['50'],
+                    '10': Math.floor(amounts['10'] / 10) - smallCoinsBreakdown['10'],
+                    '5': Math.floor(amounts['5'] / 5) - smallCoinsBreakdown['5'],
+                    '1': Math.floor(amounts['1'] / 1) - smallCoinsBreakdown['1']
+                };
+                
+                // 計算保留硬幣的袋裝情況
+                const keptCoinsBags = {
+                    '50': calculateBags(keptCoinsDetail['50'] * 50, 50),
+                    '10': calculateBags(keptCoinsDetail['10'] * 10, 10),
+                    '5': calculateBags(keptCoinsDetail['5'] * 5, 5),
+                    '1': calculateBags(keptCoinsDetail['1'] * 1, 1)
+                };
+                
+                // 新規則: 500元限制在10,000元以內，100元盡可能保留
+                // 計算用於零用金的 500 元數量 (最多10,000元)
+                const max500ForPettyCash = Math.min(
+                    Math.floor(10000 / 500), // 最多20張
+                    Math.floor(remainingCashNeeded / 500), // 需要的張數
+                    counts['500'] // 實際有的張數
+                );
+                const amount500ForPettyCash = max500ForPettyCash * 500;
+                
+                // 剩餘需要用100元補足的金額
+                let remaining100Needed = remainingCashNeeded - amount500ForPettyCash;
+                // 盡可能使用100元來補足
+                let used100ForPettyCash = Math.min(Math.ceil(remaining100Needed / 100), counts['100']);
+                const amount100ForPettyCash = used100ForPettyCash * 100;
+                
+                // 如果100元不夠，需要額外使用500元
+                let extra500ForPettyCash = 0;
+                let amountExtra500 = 0;
+                if (amount100ForPettyCash < remaining100Needed) {
+                    const shortfall = remaining100Needed - amount100ForPettyCash;
+                    // 需要多幾張500元才能補足差額
+                    extra500ForPettyCash = Math.ceil(shortfall / 500);
+                    // 確保有足夠的500元面額可用
+                    extra500ForPettyCash = Math.min(extra500ForPettyCash, counts['500'] - max500ForPettyCash);
+                    amountExtra500 = extra500ForPettyCash * 500;
+                }
+                
+                // 更新500元實際使用量
+                const total500ForPettyCash = max500ForPettyCash + extra500ForPettyCash;
+                const totalAmount500ForPettyCash = amount500ForPettyCash + amountExtra500;
+                
+                // 實際預留零用金總額
+                const actualPettyCash = keptCoins + totalAmount500ForPettyCash + amount100ForPettyCash;
+                const balanceGap = pettyCashTarget - actualPettyCash;
+                
+                // 4. 營收上繳
+                const revenueAmount = totalAmount - actualPettyCash;
+                
+                // 計算各面額在營收上繳中的數量
+                const revenueDetail = {
+                    '1000': counts['1000'],
+                    '500': counts['500'] - total500ForPettyCash,
+                    '100': counts['100'] - used100ForPettyCash,
+                    '50': smallCoinsBreakdown['50'],
+                    '10': smallCoinsBreakdown['10'],
+                    '5': smallCoinsBreakdown['5'],
+                    '1': smallCoinsBreakdown['1']
+                };
+                
+                // 更新 UI
+                // 總覽
+                document.getElementById('total-amount').textContent = formatMoney(totalAmount);
+                document.getElementById('summary-small-coins').textContent = formatMoney(remainderCoins);
+                document.getElementById('summary-revenue').textContent = formatMoney(revenueAmount);
+                document.getElementById('petty-cash-actual').textContent = formatMoney(actualPettyCash);
+                
+                // 檢查預留零用金是否滿足目標，若不足則閃紅提示
+                const pettyBoxElement = document.getElementById('petty-cash-box');
+                pettyBoxElement.classList.remove('error');
+                if (balanceGap > 0) {
+                    pettyBoxElement.classList.add('error');
+                }
+                
+                // 零錢處理
+                document.getElementById('total-coins').textContent = formatMoney(totalCoins);
+                document.getElementById('remainder-coins').textContent = formatMoney(remainderCoins);
+                document.getElementById('moved-coins').textContent = formatMoney(remainderCoins);
+                
+                // 零錢明細
+                let coinBreakdownHTML = '';
+                if (remainderCoins > 0) {
+                    coinBreakdownHTML = '<div class="highlight">' + remainderCoins + '$ = ';
+                    
+                    const parts = [];
+                    if (smallCoinsBreakdown['50'] > 0) {
+                        parts.push('50元×' + smallCoinsBreakdown['50']);
+                    }
+                    if (smallCoinsBreakdown['10'] > 0) {
+                        parts.push('10元×' + smallCoinsBreakdown['10']);
+                    }
+                    if (smallCoinsBreakdown['5'] > 0) {
+                        parts.push('5元×' + smallCoinsBreakdown['5']);
+                    }
+                    if (smallCoinsBreakdown['1'] > 0) {
+                        parts.push('1元×' + smallCoinsBreakdown['1']);
+                    }
+                    
+                    coinBreakdownHTML += parts.join(' + ') + '</div>';
+                }
+                document.getElementById('coin-breakdown').innerHTML = coinBreakdownHTML;
+                
+                // 預留零用金 - 保留硬幣
+                document.getElementById('kept-coins-total').textContent = formatMoney(keptCoins);
+                
+                let keptCoinsHTML = '';
+                // 50元
+                keptCoinsHTML += `
+                    <div class="result-row compact-row">
+                        <div class="label">50元：</div>
+                        <div class="value">
+                            <span class="money-amount money-amount-50">${formatMoney(keptCoinsDetail['50'] * 50)}</span>
+                            <span class="money-package">${keptCoinsBags['50'].bags > 0 ? keptCoinsBags['50'].bags + '袋' : ''}${keptCoinsBags['50'].bags > 0 && keptCoinsBags['50'].loose > 0 ? '+' : ''}${keptCoinsBags['50'].loose > 0 ? keptCoinsBags['50'].looseAmount + '元' : keptCoinsBags['50'].bags === 0 ? '0元' : ''}</span>
+                        </div>
+                    </div>
+                `;
+                // 10元
+                keptCoinsHTML += `
+                    <div class="result-row compact-row">
+                        <div class="label">10元：</div>
+                        <div class="value">
+                            <span class="money-amount money-amount-10">${formatMoney(keptCoinsDetail['10'] * 10)}</span>
+                            <span class="money-package">${keptCoinsBags['10'].bags > 0 ? keptCoinsBags['10'].bags + '袋' : ''}${keptCoinsBags['10'].bags > 0 && keptCoinsBags['10'].loose > 0 ? '+' : ''}${keptCoinsBags['10'].loose > 0 ? keptCoinsBags['10'].looseAmount + '元' : keptCoinsBags['10'].bags === 0 ? '0元' : ''}</span>
+                        </div>
+                    </div>
+                `;
+                // 5元
+                keptCoinsHTML += `
+                    <div class="result-row compact-row">
+                        <div class="label">5元：</div>
+                        <div class="value">
+                            <span class="money-amount money-amount-5">${formatMoney(keptCoinsDetail['5'] * 5)}</span>
+                            <span class="money-package">${keptCoinsBags['5'].bags > 0 ? keptCoinsBags['5'].bags + '袋' : ''}${keptCoinsBags['5'].bags > 0 && keptCoinsBags['5'].loose > 0 ? '+' : ''}${keptCoinsBags['5'].loose > 0 ? keptCoinsBags['5'].looseAmount + '元' : keptCoinsBags['5'].bags === 0 ? '0元' : ''}</span>
+                        </div>
+                    </div>
+                `;
+                // 1元
+                keptCoinsHTML += `
+                    <div class="result-row compact-row">
+                        <div class="label">1元：</div>
+                        <div class="value">
+                            <span class="money-amount money-amount-1">${formatMoney(keptCoinsDetail['1'] * 1)}</span>
+                            <span class="money-package">${keptCoinsBags['1'].bags > 0 ? keptCoinsBags['1'].bags + '袋' : ''}${keptCoinsBags['1'].bags > 0 && keptCoinsBags['1'].loose > 0 ? '+' : ''}${keptCoinsBags['1'].loose > 0 ? keptCoinsBags['1'].looseAmount + '元' : keptCoinsBags['1'].bags === 0 ? '0元' : ''}</span>
+                        </div>
+                    </div>
+                `;
+                // 硬幣合計
+                keptCoinsHTML += `
+                    <div class="result-row result-total">
+                        <div class="label">硬幣合計：</div>
+                        <div class="value money-amount">${formatMoney(keptCoins)}</div>
+                    </div>
+                `;
+                document.getElementById('kept-coins-detail').innerHTML = keptCoinsHTML;
+                
+                // 預留零用金 - 紙鈔填滿剩餘
+                let paperMoneyHTML = '';
+                // 500元
+                paperMoneyHTML += `
+                    <div class="result-row compact-row">
+                        <div class="label">500元：</div>
+                        <div class="value">
+                            <span class="money-amount money-amount-500">${formatMoney(totalAmount500ForPettyCash)}</span>
+                            <span class="money-package">${total500ForPettyCash} 張</span>
+                        </div>
+                    </div>
+                `;
+                // 100元
+                paperMoneyHTML += `
+                    <div class="result-row compact-row">
+                        <div class="label">100元：</div>
+                        <div class="value">
+                            <span class="money-amount money-amount-100">${formatMoney(amount100ForPettyCash)}</span>
+                            <span class="money-package">${used100ForPettyCash} 張</span>
+                        </div>
+                    </div>
+                `;
+                // 紙鈔合計
+                paperMoneyHTML += `
+                    <div class="result-row result-total">
+                        <div class="label">紙鈔合計：</div>
+                        <div class="value money-amount">${formatMoney(totalAmount500ForPettyCash + amount100ForPettyCash)}</div>
+                        <span class="note">（需補足金額：${formatMoney(remainingCashNeeded)}）</span>
+                    </div>
+                `;
+                document.getElementById('paper-money-detail').innerHTML = paperMoneyHTML;
+                
+                // 顯示預留零用金的實際總額
+                document.getElementById('petty-cash-final').textContent = formatMoney(actualPettyCash);
+                
+                // 檢查是否達到目標金額，顯示警告
+                const balanceWarningElement = document.getElementById('balance-warning');
+                const balanceWarningTextElement = document.getElementById('balance-warning-text');
+                
+                if (balanceGap !== 0) {
+                    balanceWarningElement.style.display = 'block';
+                    let warningText = `<p>預留零用金實際為 <strong>${formatMoney(actualPettyCash)}</strong>，`;
+                    if (balanceGap > 0) {
+                        warningText += `比目標金額少了 <strong>${formatMoney(balanceGap)}</strong>。</p>`;
+                        warningText += `<p>原因：紙鈔面額不足，已按照規則分配500元及100元。</p>`;
+                        warningText += `<p>建議：調整現金結構，增加100元的數量，或調整500元分配規則。</p>`;
+                    } else {
+                        warningText += `比目標金額多了 <strong>${formatMoney(Math.abs(balanceGap))}</strong>。</p>`;
+                        warningText += `<p>請檢查計算或調整現金結構。</p>`;
+                    }
+                    balanceWarningTextElement.innerHTML = warningText;
+                } else {
+                    balanceWarningElement.style.display = 'none';
+                }
+                
+                // 營收上繳
+                document.getElementById('revenue-amount').textContent = formatMoney(revenueAmount);
+                
+                let revenueHTML = '';
+                
+                // 1000元
+                if (revenueDetail['1000'] > 0) {
+                    revenueHTML += `
+                        <div class="result-row compact-row">
+                            <div class="label">1000元：</div>
+                            <div class="value">
+                                <span class="money-amount money-amount-1000">${formatMoney(revenueDetail['1000'] * 1000)}</span>
+                                <span class="money-package">${revenueDetail['1000']} 張</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // 500元
+                if (revenueDetail['500'] > 0) {
+                    revenueHTML += `
+                        <div class="result-row compact-row">
+                            <div class="label">500元：</div>
+                            <div class="value">
+                                <span class="money-amount money-amount-500">${formatMoney(revenueDetail['500'] * 500)}</span>
+                                <span class="money-package">${revenueDetail['500']} 張</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // 100元
+                if (revenueDetail['100'] > 0) {
+                    revenueHTML += `
+                        <div class="result-row compact-row">
+                            <div class="label">100元：</div>
+                            <div class="value">
+                                <span class="money-amount money-amount-100">${formatMoney(revenueDetail['100'] * 100)}</span>
+                                <span class="money-package">${revenueDetail['100']} 張</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // 硬幣部分
+                if (remainderCoins > 0) {
+                    revenueHTML += `
+                        <div class="result-row compact-row">
+                            <div class="label">零錢（多出兩位數）：</div>
+                            <div class="value money-amount">${formatMoney(remainderCoins)}</div>
+                        </div>
+                    `;
+                    
+                    // 50元
+                    if (revenueDetail['50'] > 0) {
+                        revenueHTML += `
+                            <div class="result-row compact-row" style="padding-left: 20px;">
+                                <div class="label">50元：</div>
+                                <div class="value">
+                                    <span class="money-amount money-amount-50">${formatMoney(revenueDetail['50'] * 50)}</span>
+                                    <span class="money-package">${revenueDetail['50']} 枚</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // 10元
+                    if (revenueDetail['10'] > 0) {
+                        revenueHTML += `
+                            <div class="result-row compact-row" style="padding-left: 20px;">
+                                <div class="label">10元：</div>
+                                <div class="value">
+                                    <span class="money-amount money-amount-10">${formatMoney(revenueDetail['10'] * 10)}</span>
+                                    <span class="money-package">${revenueDetail['10']} 枚</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // 5元
+                    if (revenueDetail['5'] > 0) {
+                        revenueHTML += `
+                            <div class="result-row compact-row" style="padding-left: 20px;">
+                                <div class="label">5元：</div>
+                                <div class="value">
+                                    <span class="money-amount money-amount-5">${formatMoney(revenueDetail['5'] * 5)}</span>
+                                    <span class="money-package">${revenueDetail['5']} 枚</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // 1元
+                    if (revenueDetail['1'] > 0) {
+                        revenueHTML += `
+                            <div class="result-row compact-row" style="padding-left: 20px;">
+                                <div class="label">1元：</div>
+                                <div class="value">
+                                    <span class="money-amount money-amount-1">${formatMoney(revenueDetail['1'] * 1)}</span>
+                                    <span class="money-package">${revenueDetail['1']} 枚</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                document.getElementById('revenue-details').innerHTML = revenueHTML;
+                
+                // 顯示結果區域
+                document.getElementById('result-container').classList.add('active');
+            });
+            
+            // 即時驗證輸入是否為面額的倍數
+            document.querySelectorAll('input[type="text"]').forEach(input => {
+                const denomination = parseInt(input.id.replace('amount', ''));
+                
+                // 添加數字千分位格式化
+                input.addEventListener('input', function() {
+                    // 移除非數字字符
+                    let value = this.value.replace(/[^\d]/g, '');
+                    // 移除前導零
+                    value = value.replace(/^0+/, '');
+                    // 格式化數字（添加千分位）
+                    if (value) {
+                        value = new Intl.NumberFormat('zh-TW').format(value);
+                    }
+                    this.value = value;
+                });
+                
+                input.addEventListener('blur', function() {
+                    validateInput(this, denomination);
+                    
+                    // 自動調整金額為面額的倍數
+                    const value = parseInt(this.value.replace(/,/g, '')) || 0;
+                    if (value % denomination !== 0) {
+                        const adjusted = Math.floor(value / denomination) * denomination;
+                        this.value = new Intl.NumberFormat('zh-TW').format(adjusted);
+                        validateInput(this, denomination); // 重新檢查調整後的值
+                    }
+                });
+            });
+            
+            // 模態框功能
+            const packageModal = document.getElementById('package-modal');
+            const manualModal = document.getElementById('manual-modal');
+            const packageBtn = document.getElementById('show-package-info');
+            const manualBtn = document.getElementById('show-manual');
+            const closeBtns = document.querySelectorAll('.close');
+            
+            packageBtn.onclick = function() {
+                packageModal.style.display = "block";
+            }
+            
+            manualBtn.onclick = function() {
+                manualModal.style.display = "block";
+            }
+            
+            closeBtns.forEach(btn => {
+                btn.onclick = function() {
+                    packageModal.style.display = "none";
+                    manualModal.style.display = "none";
+                }
+            });
+            
+            window.onclick = function(event) {
+                if (event.target == packageModal) {
+                    packageModal.style.display = "none";
+                }
+                if (event.target == manualModal) {
+                    manualModal.style.display = "none";
+                }
+            }
+        });
+    </script>
+</body>
+</html>
